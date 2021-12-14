@@ -1,6 +1,8 @@
 import VictoryNFTCollectionItem from "./VictoryNFTCollectionItem.cdc"
-import FungibleToken from "./FungibleToken.cdc"
-import NonFungibleToken from "./NonFungibleToken.cdc"
+// FungibleToken - MAINNET
+import FungibleToken from 0xf233dcee88fe0abe
+// NonFungibleToken - MAINNET
+import NonFungibleToken from 0x1d7e57aa55817448
 
 /*
     This is a VictoryNFTCollectionItem sale contract for the DApp to use

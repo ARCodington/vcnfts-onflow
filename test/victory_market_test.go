@@ -391,7 +391,31 @@ func TestVictoryMarketAuction(t *testing.T) {
 			true,
 		)
 
-		// place the first bid
+		// should be able to start the bidding at the initial price
+		victory_market.PlaceOfferBid(
+			t, b,
+			contracts,
+			buyerAddress,
+			buyerSigner,
+			0,
+			100.0,
+			sellerAddress,
+			false,
+		)
+
+		// should not be able to rebid at the same price after first bid
+		victory_market.PlaceOfferBid(
+			t, b,
+			contracts,
+			buyerAddress,
+			buyerSigner,
+			0,
+			100.0,
+			sellerAddress,
+			true,
+		)
+
+		// place another bid
 		victory_market.PlaceOfferBid(
 			t, b,
 			contracts,
@@ -411,7 +435,7 @@ func TestVictoryMarketAuction(t *testing.T) {
 		)
 		assert.EqualValues(t, test.CadenceUFix64("120.0"), price)
 
-		// place the second bid
+		// place another bid
 		victory_market.PlaceOfferBid(
 			t, b,
 			contracts,
@@ -431,7 +455,7 @@ func TestVictoryMarketAuction(t *testing.T) {
 		)
 		assert.EqualValues(t, test.CadenceUFix64("135.0"), price)
 
-		// place the third bid
+		// place the final bid
 		victory_market.PlaceOfferBid(
 			t, b,
 			contracts,
