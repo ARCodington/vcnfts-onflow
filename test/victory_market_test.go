@@ -17,6 +17,7 @@ const mtTypeID = 0
 const mtBrandID = 0
 const mtDropID = 0
 const mtContentHash = "88232f58db5d619497e852dd8ebf3ef6971ec94422d9ae673db53ed2e0f390dc"
+const mtStartIssueNum = 0
 const mtMaxIssueNum = 5
 const mtMetaURL = "https://offchain.storage.com/"
 const mtGeoURL = "https://geolocation.com:443/"
@@ -48,7 +49,9 @@ func TestVictoryMarketPrimaryAndSecondaryOffer(t *testing.T) {
 		contracts.VictoryItemsAddress, 
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
-		mtTypeID, mtBrandID, mtDropID, mtContentHash, mtMaxIssueNum, mtMetaURL, mtGeoURL)
+		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
+		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum, 
+		mtMetaURL, mtGeoURL)
 
 	bundleIDs := []uint64{0, 3}
 
@@ -348,7 +351,9 @@ func TestVictoryMarketAuction(t *testing.T) {
 		contracts.VictoryItemsAddress, 
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
-		mtTypeID, mtBrandID, mtDropID, mtContentHash, mtMaxIssueNum, mtMetaURL, mtGeoURL)
+		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
+		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum, 
+		mtMetaURL, mtGeoURL)
 
 	bundleIDs := []uint64{0, 3}
 
@@ -520,5 +525,128 @@ func TestVictoryMarketAuction(t *testing.T) {
 			[][]byte{jsoncdc.MustEncode(cadence.Address(royaltyAddress))},
 		)
 		assert.EqualValues(t, test.CadenceUFix64("60.0"), userBalance)
+	})
+}
+
+func TestVictoryMarketMintOnDemand(t *testing.T) {
+	b := test.NewBlockchain()
+
+	contracts := victory_market.DeployContracts(t, b)
+	sellerAddress, sellerSigner := victory_market.CreateAccount(t, b, contracts)
+
+	victory_items.MintItem(t, b, 
+		contracts.NonFungibleTokenAddress, 
+		contracts.VictoryItemsAddress, 
+		contracts.VictoryItemsSigner,
+		sellerAddress, 
+		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
+		mtStartIssueNum, 1, mtMaxIssueNum, 
+		mtMetaURL, mtGeoURL)
+
+	// mint one more on demand based on the first item as reference
+	victory_items.MintItemOnDemand(t, b, 
+		contracts.NonFungibleTokenAddress, 
+		contracts.VictoryItemsAddress, 
+		contracts.VictoryItemsSigner,
+		sellerAddress, 0, 1)
+
+	bundleIDs := []uint64{1}
+
+	victory_items.CreateBundle(t, b, 
+		contracts.NonFungibleTokenAddress, 
+		contracts.VictoryItemsAddress,
+		sellerAddress,
+		sellerSigner, 
+		bundleIDs,
+		false,
+	)
+
+	// create account to receive royalty payments
+	royaltyAddress, _ := victory_market.CreateAccount(t, b, contracts)
+
+	// bundleID should be 0
+	victory_market.CreateOffer(
+		t, b,
+		contracts,
+		royaltyAddress,
+		sellerAddress,
+		sellerSigner,
+		0, 0, 100.0, 0, 0, 150.0, 0.4, false,
+	)
+
+	// create a buyer/re-seller account
+	buyerAddress, buyerSigner := victory_market.CreateAccount(t, b, contracts)
+
+	t.Run("Should be able to purchase a mint on demand bundle for sale", func(t *testing.T) {
+		// assert that the account collection is empty
+		length := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(contracts.NonFungibleTokenAddress.String(), contracts.VictoryItemsAddress.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(buyerAddress))},
+		)
+		assert.EqualValues(t, cadence.NewInt(0), length)
+
+		// fund the buyer account to the amount of the offer
+		fusd.Mint(
+			t, b,
+			contracts.FungibleTokenAddress,
+			contracts.FUSDAddress,
+			contracts.FUSDSigner,
+			buyerAddress,
+			"100.0",
+			false,
+		)
+		// now we should be able to buy
+		victory_market.BuyOffer(
+			t, b,
+			contracts,
+			buyerAddress,
+			buyerSigner,
+			0,
+			sellerAddress,
+			false,
+		)
+
+		// Item ID 0 should no longer be for sale
+		for_sale := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionForSaleScript(contracts.NonFungibleTokenAddress.String(), contracts.VictoryItemsAddress.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(sellerAddress)),
+					 jsoncdc.MustEncode(cadence.NewUInt64(1))},
+		)
+		assert.EqualValues(t, cadence.NewBool(false), for_sale)
+
+		// assert that the buyer has 1 NFT now
+		length = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(contracts.NonFungibleTokenAddress.String(), contracts.VictoryItemsAddress.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(buyerAddress))},
+		)
+		assert.EqualValues(t, cadence.NewInt(1), length)
+
+		// verify the balances
+		// buyer should have 0 FUSD left
+		userBalance := test.ExecuteScriptAndCheck(
+			t, b,
+			fusd.GetBalanceScript(contracts.FungibleTokenAddress, contracts.FUSDAddress),
+			[][]byte{jsoncdc.MustEncode(cadence.Address(buyerAddress))},
+		)
+		assert.EqualValues(t, test.CadenceUFix64("0.0"), userBalance)
+
+		// seller should have 60 FUSD (100 FUSD - 40% royalty)
+		userBalance = test.ExecuteScriptAndCheck(
+			t, b,
+			fusd.GetBalanceScript(contracts.FungibleTokenAddress, contracts.FUSDAddress),
+			[][]byte{jsoncdc.MustEncode(cadence.Address(sellerAddress))},
+		)
+		assert.EqualValues(t, test.CadenceUFix64("60.0"), userBalance)
+
+		// should have received 40 FUSD in royalties
+		userBalance = test.ExecuteScriptAndCheck(
+			t, b,
+			fusd.GetBalanceScript(contracts.FungibleTokenAddress, contracts.FUSDAddress),
+			[][]byte{jsoncdc.MustEncode(cadence.Address(royaltyAddress))},
+		)
+		assert.EqualValues(t, test.CadenceUFix64("40.0"), userBalance)
 	})
 }

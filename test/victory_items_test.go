@@ -16,6 +16,7 @@ const typeID = 0
 const brandID = 0
 const dropID = 0
 const contentHash = "88232f58db5d619497e852dd8ebf3ef69712394422d9ae673db53ed2e0f390dc"
+const startIssueNum = 0
 const maxIssueNum = 5
 const metaURL = "https://offchain.storage.com/"
 const geoURL = "https://geolocation.com:443/"
@@ -49,7 +50,9 @@ func TestCreateVictoryItem(t *testing.T) {
 
 	t.Run("Should be able to mint a victoryItems", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, singleItemMintCount, metaURL, geoURL)
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, singleItemMintCount, singleItemMintCount, 
+			metaURL, geoURL)
 
 		// assert that the account collection is correct length
 		length = test.ExecuteScriptAndCheck(
@@ -58,6 +61,117 @@ func TestCreateVictoryItem(t *testing.T) {
 			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
 		)
 		assert.EqualValues(t, cadence.NewInt(1), length)
+	})
+}
+
+func TestBatchCreateVictoryItem(t *testing.T) {
+	b := test.NewBlockchain()
+
+	nftAddress, victoryItemsAddr, victoryItemsSigner := victory_items.DeployContracts(t, b)
+
+	supply := test.ExecuteScriptAndCheck(
+		t, b,
+		victory_items.GetVictoryItemSupplyScript(nftAddress.String(), victoryItemsAddr.String()),
+		nil,
+	)
+	assert.EqualValues(t, cadence.NewUInt64(0), supply)
+
+	// assert that the account collection is empty
+	length := test.ExecuteScriptAndCheck(
+		t, b,
+		victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+		[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+	)
+	assert.EqualValues(t, cadence.NewInt(0), length)
+
+	t.Run("Should be able to mint batches of victoryItems", func(t *testing.T) {
+		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, singleItemMintCount, maxIssueNum, 
+			metaURL, geoURL)
+
+		// assert that the account collection is correct length
+		length = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+		)
+		assert.EqualValues(t, cadence.NewInt(1), length)
+
+		// assert that the maxIssueNum is as expected
+		maxIssue := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleMaxIssueScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(0))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(maxIssueNum), maxIssue)
+
+		// mint another batch
+		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum+1, maxIssueNum-1, maxIssueNum, 
+			metaURL, geoURL)
+
+		// assert that the account collection is correct length
+		length = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+		)
+		assert.EqualValues(t, cadence.NewInt(maxIssueNum), length)
+
+		// assert that the issue numbers are as expected
+		// first item in the second batch should have issue 1 not 0
+		issueNum := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleIssueNumScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(1))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(1), issueNum)
+
+		// max issue should be consistent
+		maxIssue = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleMaxIssueScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(1))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(maxIssueNum), maxIssue)
+
+		// mint a third batch
+		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, maxIssueNum, maxIssueNum, 
+			metaURL, geoURL)
+
+		// assert that the account collection is correct length
+		length = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+		)
+		assert.EqualValues(t, cadence.NewInt(maxIssueNum*2), length)
+
+		// assert that the issue numbers are as expected
+		// first item in the third batch should have issue 0
+		issueNum = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleIssueNumScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(maxIssueNum))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(0), issueNum)
+
+		// max issue should be consistent
+		maxIssue = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleMaxIssueScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(maxIssueNum))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(maxIssueNum), maxIssue)
 	})
 }
 
@@ -94,7 +208,9 @@ func TestTransferNFT(t *testing.T) {
 	// transfer an NFT
 	t.Run("Should be able to withdraw an NFT and deposit to another accounts collection", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, singleItemMintCount, metaURL, geoURL)
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, singleItemMintCount, singleItemMintCount, 
+			metaURL, geoURL)
 
 		// Cheat: we have minted at least one item, ID zero is valid
 		victory_items.TransferItem(
@@ -113,7 +229,9 @@ func TestUpdateVictoryItem(t *testing.T) {
 
 	t.Run("Should be able to update a victoryItem", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner,
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, singleItemMintCount, metaURL, geoURL)
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, singleItemMintCount, singleItemMintCount, 
+			metaURL, geoURL)
 
 		// Cheat: we have minted at least one item, ID zero is valid
 		victory_items.UpdateItemMeta(
@@ -167,7 +285,9 @@ func TestBundleFunctions(t *testing.T) {
 
 	t.Run("Should be able to mint multiple victoryItems", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner,
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, maxIssueNum, metaURL, geoURL)
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, maxIssueNum, maxIssueNum,
+			metaURL, geoURL)
 
 		// assert that the account collection is correct length
 		length := test.ExecuteScriptAndCheck(
@@ -364,5 +484,91 @@ func TestBundleFunctions(t *testing.T) {
 		for i, v := range check_ids {
 			assert.EqualValues(t, v, bundleIDs[i])
 		}
+	})
+}
+
+func TestMintOnDemandVictoryItem(t *testing.T) {
+	b := test.NewBlockchain()
+
+	nftAddress, victoryItemsAddr, victoryItemsSigner := victory_items.DeployContracts(t, b)
+
+	supply := test.ExecuteScriptAndCheck(
+		t, b,
+		victory_items.GetVictoryItemSupplyScript(nftAddress.String(), victoryItemsAddr.String()),
+		nil,
+	)
+	assert.EqualValues(t, cadence.NewUInt64(0), supply)
+
+	// assert that the account collection is empty
+	length := test.ExecuteScriptAndCheck(
+		t, b,
+		victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+		[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+	)
+	assert.EqualValues(t, cadence.NewInt(0), length)
+
+	t.Run("Should be able to mint victoryItems on demand", func(t *testing.T) {
+		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
+			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			startIssueNum, singleItemMintCount, maxIssueNum, 
+			metaURL, geoURL)
+
+		// assert that the account collection is correct length
+		length = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+		)
+		assert.EqualValues(t, cadence.NewInt(1), length)
+
+		// assert that the maxIssueNum is as expected
+		maxIssue := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleMaxIssueScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(0))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(maxIssueNum), maxIssue)
+
+		// mint another "on demand"
+		victory_items.MintItemOnDemand(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
+			victoryItemsAddr, 0, 1)
+
+		// assert that the account collection is correct length
+		length = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectionLengthScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr))},
+		)
+		assert.EqualValues(t, cadence.NewInt(2), length)
+
+		// assert that the issue numbers are as expected
+		// first item in the second batch should have issue 1 not 0
+		issueNum := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleIssueNumScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(1))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(1), issueNum)
+
+		// max issue should be consistent
+		maxIssue = test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleMaxIssueScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(1))},
+		)
+		assert.EqualValues(t, cadence.NewUInt32(maxIssueNum), maxIssue)
+
+		// assert that the metaURL was copied correctly
+		url := test.ExecuteScriptAndCheck(
+			t, b,
+			victory_items.GetCollectibleMetaURLScript(nftAddress.String(), victoryItemsAddr.String()),
+			[][]byte{jsoncdc.MustEncode(cadence.NewAddress(victoryItemsAddr)), 
+					 jsoncdc.MustEncode(cadence.NewUInt64(1))},
+		)
+		assert.EqualValues(t, cadence.NewString(metaURL), url)
+
 	})
 }

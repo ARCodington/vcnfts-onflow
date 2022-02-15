@@ -30,7 +30,7 @@ pub contract VictoryNFTCollectionStorefront {
     // A sale offer has been removed from the collection of Address.
     pub event CollectionRemovedSaleOffer(bundleID: UInt64, owner: Address)
     // A sale offer has had its price raised.
-    pub event CollectionPriceRaised(bundleID: UInt64, price: UFix64, bidder: Address)
+    pub event CollectionPriceRaised(owner: Address, bundleID: UInt64, price: UFix64, bidder: Address)
     // A sale offer has been inserted into the collection of owner.
     pub event CollectionInsertedSaleOffer(
       bundleID: UInt64,
@@ -151,11 +151,9 @@ pub contract VictoryNFTCollectionStorefront {
             self.sellerPaymentReceiver.borrow()!.deposit(from: <-buyerPayment)
 
             // withdraw NFTs from the seller and deposit them for the buyer
-            var i: Int = 0;
-            while i < self.itemIDs.length {
-                let nft <- self.sellerItemProvider.borrow()!.withdraw(withdrawID: self.itemIDs[i])
+            for id in self.itemIDs {
+                let nft <- self.sellerItemProvider.borrow()!.withdraw(withdrawID: id)
                 buyerCollection.deposit(token: <-nft)
-                i = i + 1
             }
 
             // emit an event
@@ -217,13 +215,11 @@ pub contract VictoryNFTCollectionStorefront {
             // make sure the item ID list is valid
             let collectionRef = sellerItemProvider.borrow()!
             let itemIDs = collectionRef.getBundleIDs(bundleID: bundleID)
-            var i: Int = 0;
-            while i < itemIDs.length {
+            for id in itemIDs {
                 assert(
-                    collectionRef.borrowVictoryItem(id: itemIDs[i]) != nil,
+                    collectionRef.borrowVictoryItem(id: id) != nil,
                     message: "Specified NFT is not available in the owner's collection"
                 )
-                i = i + 1
             }
 
             // assume all the items are owned by the same owner
@@ -233,11 +229,9 @@ pub contract VictoryNFTCollectionStorefront {
             self.sellerItemProvider = sellerItemProvider
 
             // store the item IDs
-            i = 0;
             self.itemIDs = []
-            while i < itemIDs.length {
-                self.itemIDs.append(itemIDs[i])
-                i = i + 1
+            for id in itemIDs {
+                self.itemIDs.append(id)
             }
 
             // store various other details of the offer
@@ -432,6 +426,7 @@ pub contract VictoryNFTCollectionStorefront {
 
             // emit an event
             emit CollectionPriceRaised(
+              owner: self.owner?.address!,
               bundleID: bundleID,
               price: bidPrice,
               bidder: bidder

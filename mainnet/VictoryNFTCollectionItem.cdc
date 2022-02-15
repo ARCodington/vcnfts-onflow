@@ -255,13 +255,11 @@ pub contract VictoryNFTCollectionItem: NonFungibleToken {
         // Returns the id of the bundle
         pub fun createBundle(itemIDs: [UInt64]): UInt64 {
             var bundle:[UInt64] = []
-            var i: Int = 0
-            while i < itemIDs.length {
-                if (self.isNFTForSale(id: itemIDs[i])) {
+            for id in itemIDs {
+                if (self.isNFTForSale(id: id)) {
                     panic("Item is already part of a bundle!")
                 }
-                bundle.append(itemIDs[i])
-                i = i + 1
+                bundle.append(id)
             }
             let id = self.nextBundleID
             self.bundles[id] = bundle
@@ -328,7 +326,9 @@ pub contract VictoryNFTCollectionItem: NonFungibleToken {
                         brandID: UInt64, 
                         dropID: UInt64,
                         contentHash: UInt256, 
+                        startIssueNum: UInt32, 
                         maxIssueNum: UInt32, 
+                        totalIssueNum: UInt32, 
                         metaURL: String, 
                         geoURL: String) {
             var i: UInt32 = 0;
@@ -343,8 +343,8 @@ pub contract VictoryNFTCollectionItem: NonFungibleToken {
                                                                 initBrandID: brandID,
                                                                 initDropID: dropID,
                                                                 initHash:contentHash,
-                                                                initIssueNum:i, 
-                                                                initMaxIssueNum: maxIssueNum, 
+                                                                initIssueNum:i + startIssueNum, 
+                                                                initMaxIssueNum: totalIssueNum, 
                                                                 initURL:metaURL, 
                                                                 initGeoURL:geoURL))
 

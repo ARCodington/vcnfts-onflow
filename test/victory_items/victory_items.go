@@ -27,6 +27,7 @@ const (
 
 	victoryItemsSetupAccountPath        	= victoryItemsTransactionsRootPath + "/setup_account.cdc"
 	victoryItemsMintVictoryItemPath       	= victoryItemsTransactionsRootPath + "/mint_collectible.cdc"
+	victoryItemsDemandVictoryItemPath     	= victoryItemsTransactionsRootPath + "/mint_on_demand.cdc"
 	victoryItemsTransferVictoryItemPath 	= victoryItemsTransactionsRootPath + "/transfer_collectible.cdc"
 	victoryItemsUpdateMetaURLPath			= victoryItemsTransactionsRootPath + "/update_collectible_metaurl.cdc"
 	victoryItemsUpdateGeoURLPath 			= victoryItemsTransactionsRootPath + "/update_collectible_geourl.cdc"
@@ -39,6 +40,8 @@ const (
 	victoryItemsGetCollectibleMetaURLPath	= victoryItemsScriptsRootPath + "/read_collectible_metaurl.cdc"
 	victoryItemsGetCollectibleGeoURLPath	= victoryItemsScriptsRootPath + "/read_collectible_geourl.cdc"
 	victoryItemsGetCollectibleHashPath		= victoryItemsScriptsRootPath + "/read_collectible_hash.cdc"
+	victoryItemsGetCollectibleMaxIssuePath  = victoryItemsScriptsRootPath + "/read_collectible_maxissue.cdc"
+	victoryItemsGetCollectibleIssueNumPath  = victoryItemsScriptsRootPath + "/read_collectible_issue.cdc"
 	victoryItemsGetCollectionLengthPath		= victoryItemsScriptsRootPath + "/read_collection_length.cdc"
 	victoryItemsGetCollectionIDsPath		= victoryItemsScriptsRootPath + "/read_collection_ids.cdc"
 	victoryItemsGetCollectionBundleIDsPath	= victoryItemsScriptsRootPath + "/read_collection_bundle_ids.cdc"
@@ -120,7 +123,9 @@ func MintItem(
 	victoryItemsAddr flow.Address,
 	victoryItemsSigner crypto.Signer, 
 	recipientAddr flow.Address,
-	typeID uint64, brandID uint64, dropID uint64, contentHash string, maxIssueNum uint32, metaURL string, geoURL string,
+	typeID uint64, brandID uint64, dropID uint64, contentHash string, 
+	startIssueNum uint32, maxIssueNum uint32, totalIssueNum uint32, 
+	metaURL string, geoURL string,
 ) {
 	tx := flow.NewTransaction().
 		SetScript(MintVictoryItemScript(nftAddress.String(), victoryItemsAddr.String())).
@@ -134,7 +139,9 @@ func MintItem(
 	_ = tx.AddArgument(cadence.NewUInt64(brandID))
 	_ = tx.AddArgument(cadence.NewUInt64(dropID))
 	_ = tx.AddArgument(cadence.NewString(contentHash))
+	_ = tx.AddArgument(cadence.NewUInt32(startIssueNum))
 	_ = tx.AddArgument(cadence.NewUInt32(maxIssueNum))
+	_ = tx.AddArgument(cadence.NewUInt32(totalIssueNum))
 	_ = tx.AddArgument(cadence.NewString(metaURL))
 	_ = tx.AddArgument(cadence.NewString(geoURL))
 
@@ -434,6 +441,46 @@ func RemoveAllBundles(
 	}
 }
 
+func MintItemOnDemand(
+	t *testing.T, b *emulator.Blockchain,
+	nftAddress, 
+	victoryItemsAddr flow.Address,
+	victoryItemsSigner crypto.Signer, 
+	recipientAddr flow.Address,
+	referenceItemID uint64, issueNum uint32, 
+) {
+	tx := flow.NewTransaction().
+		SetScript(MintOnDemandVictoryItemScript(nftAddress.String(), victoryItemsAddr.String())).
+		SetGasLimit(9999).
+		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
+		SetPayer(b.ServiceKey().Address).
+		AddAuthorizer(victoryItemsAddr)
+
+	_ = tx.AddArgument(cadence.NewAddress(recipientAddr))
+	_ = tx.AddArgument(cadence.NewUInt64(referenceItemID))
+	_ = tx.AddArgument(cadence.NewUInt32(issueNum))
+
+	result := test.SignAndSubmit(
+		t, b, tx,
+		[]flow.Address{b.ServiceKey().Address, victoryItemsAddr},
+		[]crypto.Signer{b.ServiceKey().Signer(), victoryItemsSigner},
+		false,
+	)
+
+	// confirm an event was raised
+	eventType := fmt.Sprintf(
+		"A.%s.VictoryNFTCollectionItem.Minted",
+		victoryItemsAddr,
+	)
+
+	for _, event := range result.Events {
+		if event.Type == eventType {
+			return
+		}
+	}
+	assert.Fail(t, "Minted event was not emitted")
+}
+
 func loadVictoryItems(nftAddress string) []byte {
 	return []byte(test.ReplaceImports(
 		string(test.ReadFile(victoryItemsContractPath)),
@@ -464,6 +511,14 @@ func SetupAccountScript(nftAddress, victoryItemsAddress string) []byte {
 func MintVictoryItemScript(nftAddress, victoryItemsAddress string) []byte {
 	return replaceAddressPlaceholders(
 		string(test.ReadFile(victoryItemsMintVictoryItemPath)),
+		nftAddress,
+		victoryItemsAddress,
+	)
+}
+
+func MintOnDemandVictoryItemScript(nftAddress, victoryItemsAddress string) []byte {
+	return replaceAddressPlaceholders(
+		string(test.ReadFile(victoryItemsDemandVictoryItemPath)),
 		nftAddress,
 		victoryItemsAddress,
 	)
@@ -560,6 +615,22 @@ func GetCollectibleGeoURLScript(nftAddress, victoryItemsAddress string) []byte {
 func GetCollectibleHashScript(nftAddress, victoryItemsAddress string) []byte {
 	return replaceAddressPlaceholders(
 		string(test.ReadFile(victoryItemsGetCollectibleHashPath)),
+		nftAddress,
+		victoryItemsAddress,
+	)
+}
+
+func GetCollectibleMaxIssueScript(nftAddress, victoryItemsAddress string) []byte {
+	return replaceAddressPlaceholders(
+		string(test.ReadFile(victoryItemsGetCollectibleMaxIssuePath)),
+		nftAddress,
+		victoryItemsAddress,
+	)
+}
+
+func GetCollectibleIssueNumScript(nftAddress, victoryItemsAddress string) []byte {
+	return replaceAddressPlaceholders(
+		string(test.ReadFile(victoryItemsGetCollectibleIssueNumPath)),
 		nftAddress,
 		victoryItemsAddress,
 	)
