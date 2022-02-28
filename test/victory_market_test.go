@@ -19,8 +19,6 @@ const mtDropID = 0
 const mtContentHash = "88232f58db5d619497e852dd8ebf3ef6971ec94422d9ae673db53ed2e0f390dc"
 const mtStartIssueNum = 0
 const mtMaxIssueNum = 5
-const mtMetaURL = "https://offchain.storage.com/"
-const mtGeoURL = "https://geolocation.com:443/"
 
 func TestVictoryMarketDeployContracts(t *testing.T) {
 	b := test.NewBlockchain()
@@ -50,8 +48,7 @@ func TestVictoryMarketPrimaryAndSecondaryOffer(t *testing.T) {
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
 		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
-		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum, 
-		mtMetaURL, mtGeoURL)
+		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum)
 
 	bundleIDs := []uint64{0, 3}
 
@@ -352,8 +349,7 @@ func TestVictoryMarketAuction(t *testing.T) {
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
 		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
-		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum, 
-		mtMetaURL, mtGeoURL)
+		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum)
 
 	bundleIDs := []uint64{0, 3}
 
@@ -384,6 +380,38 @@ func TestVictoryMarketAuction(t *testing.T) {
 	buyer2Address, buyer2Signer := victory_market.CreateAccount(t, b, contracts)
 
 	t.Run("Should be able to auction a bundle for sale", func(t *testing.T) {
+		// should not be able to bid without funds
+		victory_market.PlaceOfferBid(
+			t, b,
+			contracts,
+			buyerAddress,
+			buyerSigner,
+			0,
+			100.0,
+			sellerAddress,
+			true,
+		)
+
+		// fund the buyer accounts
+		fusd.Mint(
+			t, b,
+			contracts.FungibleTokenAddress,
+			contracts.FUSDAddress,
+			contracts.FUSDSigner,
+			buyerAddress,
+			"150.0",
+			false,
+		)
+		fusd.Mint(
+			t, b,
+			contracts.FungibleTokenAddress,
+			contracts.FUSDAddress,
+			contracts.FUSDSigner,
+			buyer2Address,
+			"150.0",
+			false,
+		)
+
 		// should not be able to lower the price
 		victory_market.PlaceOfferBid(
 			t, b,
@@ -407,6 +435,14 @@ func TestVictoryMarketAuction(t *testing.T) {
 			sellerAddress,
 			false,
 		)
+
+		// buyer should still have 150 FUSD left
+		userBalance := test.ExecuteScriptAndCheck(
+			t, b,
+			fusd.GetBalanceScript(contracts.FungibleTokenAddress, contracts.FUSDAddress),
+			[][]byte{jsoncdc.MustEncode(cadence.Address(buyerAddress))},
+		)
+		assert.EqualValues(t, test.CadenceUFix64("150.0"), userBalance)
 
 		// should not be able to rebid at the same price after first bid
 		victory_market.PlaceOfferBid(
@@ -480,17 +516,6 @@ func TestVictoryMarketAuction(t *testing.T) {
 		)
 		assert.EqualValues(t, test.CadenceUFix64("150.0"), price)
 		
-		// fund the buyer account
-		fusd.Mint(
-			t, b,
-			contracts.FungibleTokenAddress,
-			contracts.FUSDAddress,
-			contracts.FUSDSigner,
-			buyerAddress,
-			"150.0",
-			false,
-		)
-
 		victory_market.BuyOffer(
 			t, b,
 			contracts,
@@ -503,7 +528,7 @@ func TestVictoryMarketAuction(t *testing.T) {
 
 		// verify the balances
 		// buyer should have 0 FUSD left
-		userBalance := test.ExecuteScriptAndCheck(
+		userBalance = test.ExecuteScriptAndCheck(
 			t, b,
 			fusd.GetBalanceScript(contracts.FungibleTokenAddress, contracts.FUSDAddress),
 			[][]byte{jsoncdc.MustEncode(cadence.Address(buyerAddress))},
@@ -540,8 +565,7 @@ func TestVictoryMarketMintOnDemand(t *testing.T) {
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
 		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
-		mtStartIssueNum, 1, mtMaxIssueNum, 
-		mtMetaURL, mtGeoURL)
+		mtStartIssueNum, 1, mtMaxIssueNum)
 
 	// mint one more on demand based on the first item as reference
 	victory_items.MintItemOnDemand(t, b, 

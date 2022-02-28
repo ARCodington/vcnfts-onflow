@@ -52,9 +52,9 @@ pub contract VictoryNFTCollectionStorefront {
     //
     pub resource interface SaleOfferPublicView {
         pub var saleCompleted: Bool
-        pub let bundleID: UInt64
-        pub let itemIDs: [UInt64]
         pub var price: UFix64
+        pub var winner: Address
+        pub let bundleID: UInt64
         pub let saleType: UInt8
         pub let startTime: UInt32
         pub let endTime: UInt32
@@ -62,7 +62,6 @@ pub contract VictoryNFTCollectionStorefront {
         pub let royaltyFactor: UFix64
         pub let originalOwner: Address
         pub let seller: Address
-        pub var winner: Address
     }
 
     // SaleOffer
@@ -74,9 +73,6 @@ pub contract VictoryNFTCollectionStorefront {
 
         // The ID for the bundle
         pub let bundleID: UInt64
-
-        // The VictoryNFTCollectionItem NFT IDs for sale.
-        pub let itemIDs: [UInt64]
 
         // The sale payment price.
         pub var price: UFix64
@@ -104,6 +100,9 @@ pub contract VictoryNFTCollectionStorefront {
 
         // The (current) winner of the item(s)
         pub var winner: Address
+
+        // The VictoryNFTCollectionItem NFT IDs for sale.
+        access(self) let itemIDs: [UInt64]
 
         // The collection containing the IDs.
         access(self) let sellerItemProvider: Capability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider}>
@@ -164,16 +163,23 @@ pub contract VictoryNFTCollectionStorefront {
         //
         pub fun raisePrice(
             newPrice: UFix64,
-            bidder: Address
+            bidder: Address,
+            bidderReceiver: Capability<&{FungibleToken.Receiver}>,
+            bidVault: @FungibleToken.Vault,
         ) {
             pre {
-                // price can only go up unless this is the very first bid
-                newPrice > self.price || ((newPrice == self.price) && (self.seller == self.winner)): "price can only go up"
                 self.saleCompleted == false: "the sale offer has already been accepted"
+                // price can only go up unless this is the very first bid
+                newPrice > self.price || ((newPrice == self.price && self.winner == self.seller)): "price can only go up"
+                // ensure buyer has enough currency to make good on the bid
+                bidVault.balance >= newPrice: "insufficient funds to guarantee the bid"
             }
 
             self.price = newPrice
             self.winner = bidder
+
+            // return the funds to the bidder
+            bidderReceiver.borrow()!.deposit(from: <-bidVault)
         }
 
         // destructor
@@ -276,7 +282,7 @@ pub contract VictoryNFTCollectionStorefront {
                 royaltyFactor: UFix64
             ): @SaleOffer 
         pub fun insert(offer: @VictoryNFTCollectionStorefront.SaleOffer)
-        pub fun remove(bundleID: UInt64): @SaleOffer 
+        pub fun remove(bundleID: UInt64): @SaleOffer
     }
 
     // CollectionPurchaser
@@ -302,7 +308,9 @@ pub contract VictoryNFTCollectionStorefront {
         pub fun placeBid(
             bundleID: UInt64, 
             bidPrice: UFix64, 
-            bidder: Address
+            bidder: Address,
+            bidderReceiver: Capability<&{FungibleToken.Receiver}>,
+            bidVault: @FungibleToken.Vault
         )
         pub fun purchase(
             bundleID: UInt64,
@@ -316,7 +324,7 @@ pub contract VictoryNFTCollectionStorefront {
     // A resource that allows its owner to manage a list of SaleOffers, and purchasers to interact with them.
     //
     pub resource Collection : CollectionManager, CollectionPurchaser, CollectionPublic {
-        pub var saleOffers: @{UInt64: SaleOffer}
+        access(self) var saleOffers: @{UInt64: SaleOffer}
 
         // createSaleOffer
         // Make creating a SaleOffer publicly accessible.
@@ -409,10 +417,13 @@ pub contract VictoryNFTCollectionStorefront {
 
         // placeBid
         // Accept a bid on a bundle from a specified potential buyer.
+        // Buyer vault is used to verify available balance.
         pub fun placeBid(
             bundleID: UInt64,
             bidPrice: UFix64,
-            bidder: Address
+            bidder: Address,
+            bidderReceiver: Capability<&{FungibleToken.Receiver}>,
+            bidVault: @FungibleToken.Vault
         ) {
             pre {
                 self.saleOffers[bundleID] != nil: "SaleOffer does not exist in the collection!"
@@ -420,7 +431,7 @@ pub contract VictoryNFTCollectionStorefront {
             // remove the offer so we can change it
             let offer <- self.saleOffers.remove(key: bundleID)!
             // raise the price
-            offer.raisePrice(newPrice: bidPrice, bidder: bidder)
+            offer.raisePrice(newPrice: bidPrice, bidder: bidder, bidderReceiver: bidderReceiver, bidVault: <-bidVault)
             // restore the offer
             self.saleOffers[bundleID] <-! offer
 

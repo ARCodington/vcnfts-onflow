@@ -12,8 +12,6 @@ pub struct ItemInfo {
     pub var issueNum: UInt32
     pub var maxIssueNum: UInt32
     pub var contentHash: String
-    pub var metaURL: String
-    pub var geoURL: String
 
     init(
         originalOwner: Address,
@@ -24,8 +22,6 @@ pub struct ItemInfo {
         issueNum: UInt32,
         maxIssueNum: UInt32,
         contentHash: String,
-        metaURL: String,
-        geoURL: String,
         ) 
     {
             self.originalOwner = originalOwner
@@ -36,8 +32,6 @@ pub struct ItemInfo {
             self.issueNum = issueNum
             self.maxIssueNum = maxIssueNum
             self.contentHash = contentHash
-            self.metaURL = metaURL
-            self.geoURL = geoURL
     }
 }
 
@@ -56,7 +50,7 @@ pub fun main(address: Address, itemID: UInt64): ItemInfo {
 
     let hash = victoryItem.contentHash
     let hashBytes = hash.toBigEndianBytes()
-    let hashStr = String.encodeHex(hashBytes)
+    let hashstr = String.encodeHex(hashBytes)
 
     return ItemInfo(
             originalOwner: victoryItem!.originalOwner,
@@ -66,8 +60,6 @@ pub fun main(address: Address, itemID: UInt64): ItemInfo {
             dropID: victoryItem!.dropID,
             issueNum: victoryItem!.issueNum,
             maxIssueNum: victoryItem!.maxIssueNum,
-            contentHash: hashStr,
-            metaURL: victoryItem!.metaURL,
-            geoURL: victoryItem!.geoURL
+            contentHash: hashstr,
         )
 }

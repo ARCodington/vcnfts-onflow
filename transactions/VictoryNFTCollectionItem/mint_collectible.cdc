@@ -6,7 +6,7 @@ import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.c
 // It must be run with the account that has the minter resource
 // stored at path /storage/NFTMinter.
 
-transaction(recipient: Address, typeID: UInt64, brandID: UInt64, dropID: UInt64, contentHash: String, startIssueNum: UInt32, maxIssueNum: UInt32, totalIssueNum: UInt32, metaURL: String, geoURL: String) {
+transaction(recipient: Address, typeID: UInt64, brandID: UInt64, dropID: UInt64, contentHash: String, startIssueNum: UInt32, maxIssueNum: UInt32, totalIssueNum: UInt32) {
     
     // local variable for storing the minter reference
     let minter: &VictoryNFTCollectionItem.NFTMinter
@@ -44,8 +44,6 @@ transaction(recipient: Address, typeID: UInt64, brandID: UInt64, dropID: UInt64,
                             contentHash:hashInt, 
                             startIssueNum: startIssueNum,
                             maxIssueNum: maxIssueNum, 
-                            totalIssueNum: totalIssueNum,
-                            metaURL: metaURL, 
-                            geoURL: geoURL)
+                            totalIssueNum: totalIssueNum)
     }
 }

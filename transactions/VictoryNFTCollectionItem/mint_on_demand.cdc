@@ -44,8 +44,6 @@ transaction(recipient: Address, referenceItemID: UInt64, issueNum: UInt32) {
                             contentHash: victoryItem.contentHash, 
                             startIssueNum: issueNum,
                             maxIssueNum: 1, 
-                            totalIssueNum: victoryItem.maxIssueNum,
-                            metaURL: victoryItem.metaURL, 
-                            geoURL: victoryItem.geoURL)
+                            totalIssueNum: victoryItem.maxIssueNum)
     }
 }

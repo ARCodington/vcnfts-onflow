@@ -8,7 +8,7 @@ transaction(bundleID: UInt64, marketCollectionAddress: Address) {
     let paymentVault: @FungibleToken.Vault
     let victoryCollection: &VictoryNFTCollectionItem.Collection{NonFungibleToken.Receiver}
     let marketCollection: &VictoryNFTCollectionStorefront.Collection{VictoryNFTCollectionStorefront.CollectionPublic}
-    let ownerFUSDVault: Capability<&{FungibleToken.Receiver}>
+    let ownerVault: Capability<&{FungibleToken.Receiver}>
 
     prepare(signer: AuthAccount) {
         self.marketCollection = getAccount(marketCollectionAddress)
@@ -23,12 +23,12 @@ transaction(bundleID: UInt64, marketCollectionAddress: Address) {
         let price = saleItem.price
 
         let ownerAccount = getAccount(saleItem.originalOwner)
-        self.ownerFUSDVault = ownerAccount.getCapability<&{FungibleToken.Receiver}>(/public/fusdReceiver)
+        self.ownerVault = ownerAccount.getCapability<&{FungibleToken.Receiver}>(/public/fusdReceiver)
 
-        let mainVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
+        let mainFUSDVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
             ?? panic("Cannot borrow FUSD vault from acct storage")
-        self.paymentVault <- mainVault.withdraw(amount: price)
-
+        self.paymentVault <- mainFUSDVault.withdraw(amount: price)
+ 
         // we need a provider capability, but one is not provided by default so we create one.
         let VictoryNFTCollectionItemCollectionProviderPrivatePath = /private/VictoryNFTCollectionItemCollectionProvider
 
@@ -45,7 +45,7 @@ transaction(bundleID: UInt64, marketCollectionAddress: Address) {
             bundleID: bundleID,
             buyerCollection: self.victoryCollection,
             buyerPayment: <- self.paymentVault,
-            ownerPaymentReceiver: self.ownerFUSDVault
+            ownerPaymentReceiver: self.ownerVault
         )
     }
 }

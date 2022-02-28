@@ -29,16 +29,11 @@ const (
 	victoryItemsMintVictoryItemPath       	= victoryItemsTransactionsRootPath + "/mint_collectible.cdc"
 	victoryItemsDemandVictoryItemPath     	= victoryItemsTransactionsRootPath + "/mint_on_demand.cdc"
 	victoryItemsTransferVictoryItemPath 	= victoryItemsTransactionsRootPath + "/transfer_collectible.cdc"
-	victoryItemsUpdateMetaURLPath			= victoryItemsTransactionsRootPath + "/update_collectible_metaurl.cdc"
-	victoryItemsUpdateGeoURLPath 			= victoryItemsTransactionsRootPath + "/update_collectible_geourl.cdc"
-	victoryItemsUpdateHashVictoryItemPath 	= victoryItemsTransactionsRootPath + "/update_collectible_hash.cdc"
 	victoryItemsCreateBundlePath	 		= victoryItemsTransactionsRootPath + "/create_collection_bundle.cdc"
 	victoryItemsRemoveBundlePath	 		= victoryItemsTransactionsRootPath + "/remove_collection_bundle.cdc"
 	victoryItemsRemoveAllBundlesPath 		= victoryItemsTransactionsRootPath + "/remove_all_bundles.cdc"
 
 	victoryItemsGetVictoryItemSupplyPath	= victoryItemsScriptsRootPath + "/read_collectibles_supply.cdc"
-	victoryItemsGetCollectibleMetaURLPath	= victoryItemsScriptsRootPath + "/read_collectible_metaurl.cdc"
-	victoryItemsGetCollectibleGeoURLPath	= victoryItemsScriptsRootPath + "/read_collectible_geourl.cdc"
 	victoryItemsGetCollectibleHashPath		= victoryItemsScriptsRootPath + "/read_collectible_hash.cdc"
 	victoryItemsGetCollectibleMaxIssuePath  = victoryItemsScriptsRootPath + "/read_collectible_maxissue.cdc"
 	victoryItemsGetCollectibleIssueNumPath  = victoryItemsScriptsRootPath + "/read_collectible_issue.cdc"
@@ -125,7 +120,6 @@ func MintItem(
 	recipientAddr flow.Address,
 	typeID uint64, brandID uint64, dropID uint64, contentHash string, 
 	startIssueNum uint32, maxIssueNum uint32, totalIssueNum uint32, 
-	metaURL string, geoURL string,
 ) {
 	tx := flow.NewTransaction().
 		SetScript(MintVictoryItemScript(nftAddress.String(), victoryItemsAddr.String())).
@@ -142,8 +136,6 @@ func MintItem(
 	_ = tx.AddArgument(cadence.NewUInt32(startIssueNum))
 	_ = tx.AddArgument(cadence.NewUInt32(maxIssueNum))
 	_ = tx.AddArgument(cadence.NewUInt32(totalIssueNum))
-	_ = tx.AddArgument(cadence.NewString(metaURL))
-	_ = tx.AddArgument(cadence.NewString(geoURL))
 
 	result := test.SignAndSubmit(
 		t, b, tx,
@@ -206,117 +198,6 @@ func TransferItem(
 		}
 		assert.Fail(t, "Deposit event was not emitted")
 	}
-}
-
-func UpdateItemMeta(
-	t *testing.T, b *emulator.Blockchain,
-	nftAddress, victoryItemsAddr flow.Address, victoryItemsSigner crypto.Signer,
-	updateID uint64, updateValue string,
-) {
-
-	tx := flow.NewTransaction().
-		SetScript(UpdateMetaURLVictoryItemScript(nftAddress.String(), victoryItemsAddr.String())).
-		SetGasLimit(9999).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(victoryItemsAddr)
-
-	_ = tx.AddArgument(cadence.NewUInt64(updateID))
-	_ = tx.AddArgument(cadence.NewString(updateValue))
-
-	result := test.SignAndSubmit(
-		t, b, tx,
-		[]flow.Address{b.ServiceKey().Address, victoryItemsAddr},
-		[]crypto.Signer{b.ServiceKey().Signer(), victoryItemsSigner},
-		false,
-	)
-
-	// confirm an event was raised
-	eventType := fmt.Sprintf(
-		"A.%s.VictoryNFTCollectionItem.MetaUpdated",
-		victoryItemsAddr,
-	)
-
-	for _, event := range result.Events {
-		if event.Type == eventType {
-			return
-		}
-	}
-	assert.Fail(t, "MetaUpdated event was not emitted")
-}
-
-func UpdateItemGeo(
-	t *testing.T, b *emulator.Blockchain,
-	nftAddress, victoryItemsAddr flow.Address, victoryItemsSigner crypto.Signer,
-	updateID uint64, updateValue string,
-) {
-
-	tx := flow.NewTransaction().
-		SetScript(UpdateGeoURLVictoryItemScript(nftAddress.String(), victoryItemsAddr.String())).
-		SetGasLimit(9999).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(victoryItemsAddr)
-
-	_ = tx.AddArgument(cadence.NewUInt64(updateID))
-	_ = tx.AddArgument(cadence.NewString(updateValue))
-
-	result := test.SignAndSubmit(
-		t, b, tx,
-		[]flow.Address{b.ServiceKey().Address, victoryItemsAddr},
-		[]crypto.Signer{b.ServiceKey().Signer(), victoryItemsSigner},
-		false,
-	)
-
-	// confirm an event was raised
-	eventType := fmt.Sprintf(
-		"A.%s.VictoryNFTCollectionItem.Geolocated",
-		victoryItemsAddr,
-	)
-
-	for _, event := range result.Events {
-		if event.Type == eventType {
-			return
-		}
-	}
-	assert.Fail(t, "Geolocated event was not emitted")
-}
-
-func UpdateItemHash(
-	t *testing.T, b *emulator.Blockchain,
-	nftAddress, victoryItemsAddr flow.Address, victoryItemsSigner crypto.Signer,
-	updateID uint64, updateValue string,
-) {
-
-	tx := flow.NewTransaction().
-		SetScript(UpdateHashVictoryItemScript(nftAddress.String(), victoryItemsAddr.String())).
-		SetGasLimit(9999).
-		SetProposalKey(b.ServiceKey().Address, b.ServiceKey().Index, b.ServiceKey().SequenceNumber).
-		SetPayer(b.ServiceKey().Address).
-		AddAuthorizer(victoryItemsAddr)
-
-	_ = tx.AddArgument(cadence.NewUInt64(updateID))
-	_ = tx.AddArgument(cadence.NewString(updateValue))
-
-	result := test.SignAndSubmit(
-		t, b, tx,
-		[]flow.Address{b.ServiceKey().Address, victoryItemsAddr},
-		[]crypto.Signer{b.ServiceKey().Signer(), victoryItemsSigner},
-		false,
-	)
-
-	// confirm an event was raised
-	eventType := fmt.Sprintf(
-		"A.%s.VictoryNFTCollectionItem.HashUpdated",
-		victoryItemsAddr,
-	)
-
-	for _, event := range result.Events {
-		if event.Type == eventType {
-			return
-		}
-	}
-	assert.Fail(t, "HashUpdated event was not emitted")
 }
 
 func CreateBundle(
@@ -532,30 +413,6 @@ func TransferVictoryItemScript(nftAddress, victoryItemsAddress string) []byte {
 	)
 }
 
-func UpdateMetaURLVictoryItemScript(nftAddress, victoryItemsAddress string) []byte {
-	return replaceAddressPlaceholders(
-		string(test.ReadFile(victoryItemsUpdateMetaURLPath)),
-		nftAddress,
-		victoryItemsAddress,
-	)
-}
-
-func UpdateGeoURLVictoryItemScript(nftAddress, victoryItemsAddress string) []byte {
-	return replaceAddressPlaceholders(
-		string(test.ReadFile(victoryItemsUpdateGeoURLPath)),
-		nftAddress,
-		victoryItemsAddress,
-	)
-}
-
-func UpdateHashVictoryItemScript(nftAddress, victoryItemsAddress string) []byte {
-	return replaceAddressPlaceholders(
-		string(test.ReadFile(victoryItemsUpdateHashVictoryItemPath)),
-		nftAddress,
-		victoryItemsAddress,
-	)
-}
-
 func CreateBundleScript(nftAddress, victoryItemsAddress string) []byte {
 	return replaceAddressPlaceholders(
 		string(test.ReadFile(victoryItemsCreateBundlePath)),
@@ -591,22 +448,6 @@ func GetVictoryItemSupplyScript(nftAddress, victoryItemsAddress string) []byte {
 func GetCollectionLengthScript(nftAddress, victoryItemsAddress string) []byte {
 	return replaceAddressPlaceholders(
 		string(test.ReadFile(victoryItemsGetCollectionLengthPath)),
-		nftAddress,
-		victoryItemsAddress,
-	)
-}
-
-func GetCollectibleMetaURLScript(nftAddress, victoryItemsAddress string) []byte {
-	return replaceAddressPlaceholders(
-		string(test.ReadFile(victoryItemsGetCollectibleMetaURLPath)),
-		nftAddress,
-		victoryItemsAddress,
-	)
-}
-
-func GetCollectibleGeoURLScript(nftAddress, victoryItemsAddress string) []byte {
-	return replaceAddressPlaceholders(
-		string(test.ReadFile(victoryItemsGetCollectibleGeoURLPath)),
 		nftAddress,
 		victoryItemsAddress,
 	)
