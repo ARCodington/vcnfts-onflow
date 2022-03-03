@@ -1,5 +1,5 @@
 // VictoryNFTCollectionItem - MAINNET
-import VictoryNFTCollectionItem from 0xe82bd4875b18be5a
+import VictoryNFTCollectionItem from 0x91960a2ca966a13e
 // FungibleToken - MAINNET
 import FungibleToken from 0xf233dcee88fe0abe
 // NonFungibleToken - MAINNET
