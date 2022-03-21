@@ -23,7 +23,7 @@ const (
 	victoryItemsTransactionsRootPath 	= rootPath + "/transactions/VictoryNFTCollectionItem"
 	victoryItemsScriptsRootPath      	= rootPath + "/scripts/VictoryNFTCollectionItem"
 
-	victoryItemsContractPath            	= rootPath + "/contracts/VictoryNFTCollectionItem.cdc"
+	victoryItemsContractPath            	= rootPath + "/contracts/VictoryCollectible.cdc"
 
 	victoryItemsSetupAccountPath        	= victoryItemsTransactionsRootPath + "/setup_account.cdc"
 	victoryItemsMintVictoryItemPath       	= victoryItemsTransactionsRootPath + "/mint_collectible.cdc"
@@ -73,7 +73,7 @@ func DeployContracts(
 		[]*flow.AccountKey{victoryItemsAccountKey},
 		[]sdktemplates.Contract{
 			{
-				Name:   "VictoryNFTCollectionItem",
+				Name:   "VictoryCollectible",
 				Source: string(victoryItemsCode),
 			},
 		},
@@ -118,7 +118,7 @@ func MintItem(
 	victoryItemsAddr flow.Address,
 	victoryItemsSigner crypto.Signer, 
 	recipientAddr flow.Address,
-	typeID uint64, brandID uint64, dropID uint64, contentHash string, 
+	typeID uint64, brandID uint64, seriesID uint64, dropID uint64, contentHash string, 
 	startIssueNum uint32, maxIssueNum uint32, totalIssueNum uint32, 
 ) {
 	tx := flow.NewTransaction().
@@ -131,6 +131,7 @@ func MintItem(
 	_ = tx.AddArgument(cadence.NewAddress(recipientAddr))
 	_ = tx.AddArgument(cadence.NewUInt64(typeID))
 	_ = tx.AddArgument(cadence.NewUInt64(brandID))
+	_ = tx.AddArgument(cadence.NewUInt64(seriesID))
 	_ = tx.AddArgument(cadence.NewUInt64(dropID))
 	_ = tx.AddArgument(cadence.NewString(contentHash))
 	_ = tx.AddArgument(cadence.NewUInt32(startIssueNum))
@@ -146,7 +147,7 @@ func MintItem(
 
 	// confirm an event was raised
 	eventType := fmt.Sprintf(
-		"A.%s.VictoryNFTCollectionItem.Minted",
+		"A.%s.VictoryCollectible.Minted",
 		victoryItemsAddr,
 	)
 
@@ -187,7 +188,7 @@ func TransferItem(
 	if (!shouldFail) {
 		// confirm an event was raised
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionItem.Deposit",
+			"A.%s.VictoryCollectible.Deposit",
 			victoryItemsAddr,
 		)
 
@@ -234,7 +235,7 @@ func CreateBundle(
 	if (!shouldFail) {
 		// confirm an event was raised
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionItem.BundleCreated",
+			"A.%s.VictoryCollectible.BundleCreated",
 			victoryItemsAddr,
 		)
 
@@ -273,7 +274,7 @@ func RemoveBundle(
 	if (!shouldFail) {
 		// confirm an event was raised
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionItem.BundleRemoved",
+			"A.%s.VictoryCollectible.BundleRemoved",
 			victoryItemsAddr,
 		)
 
@@ -309,7 +310,7 @@ func RemoveAllBundles(
 	if (!shouldFail) {
 		// confirm an event was raised
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionItem.AllBundlesRemoved",
+			"A.%s.VictoryCollectible.AllBundlesRemoved",
 			victoryItemsAddr,
 		)
 
@@ -350,7 +351,7 @@ func MintItemOnDemand(
 
 	// confirm an event was raised
 	eventType := fmt.Sprintf(
-		"A.%s.VictoryNFTCollectionItem.Minted",
+		"A.%s.VictoryCollectible.Minted",
 		victoryItemsAddr,
 	)
 

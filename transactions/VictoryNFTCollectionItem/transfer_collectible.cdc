@@ -1,5 +1,5 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
 // This transaction transfers a Victory Collection Item from one account to another.
 
@@ -10,7 +10,7 @@ transaction(recipient: Address, withdrawID: UInt64) {
         let recipient = getAccount(recipient)
 
         // borrow a reference to the signer's NFT collection
-        let collectionRef = signer.borrow<&VictoryNFTCollectionItem.Collection>(from: VictoryNFTCollectionItem.CollectionStoragePath)
+        let collectionRef = signer.borrow<&VictoryCollectible.Collection>(from: VictoryCollectible.CollectionStoragePath)
             ?? panic("Could not borrow a reference to the owner's collection")
 
         if collectionRef.isNFTForSale(id: withdrawID) {
@@ -18,7 +18,7 @@ transaction(recipient: Address, withdrawID: UInt64) {
         }
 
         // borrow a public reference to the receivers collection
-        let depositRef = recipient.getCapability(VictoryNFTCollectionItem.CollectionPublicPath)!.borrow<&{NonFungibleToken.CollectionPublic}>()!
+        let depositRef = recipient.getCapability(VictoryCollectible.CollectionPublicPath)!.borrow<&{NonFungibleToken.CollectionPublic}>()!
 
         // withdraw the NFT from the owner's collection
         let nft <- collectionRef.withdraw(withdrawID: withdrawID)

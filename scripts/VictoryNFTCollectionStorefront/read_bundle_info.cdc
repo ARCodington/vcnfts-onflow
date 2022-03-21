@@ -1,4 +1,5 @@
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
 // This script returns all the public properties of a sale offer.
 
@@ -47,20 +48,24 @@ pub struct BundleInfo {
 }
 
 pub fun main(address: Address, bundleID: UInt64): BundleInfo {
-    let marketCollectionRef = getAccount(address)
-        .getCapability<&VictoryNFTCollectionStorefront.Collection{VictoryNFTCollectionStorefront.CollectionPublic}>(
-            VictoryNFTCollectionStorefront.CollectionPublicPath
-        )
-        .borrow()
+    let owner = getAccount(address)
+
+    let marketCollectionRef = owner
+            .getCapability<&VictoryCollectibleSaleOffer.Collection{VictoryCollectibleSaleOffer.CollectionPublic}>(VictoryCollectibleSaleOffer.CollectionPublicPath)
+            .borrow()
         ?? panic("Could not borrow market collection from market address")
     
+    let itemCollectionRef = owner.getCapability(VictoryCollectible.CollectionPublicPath)!
+        .borrow<&{VictoryCollectible.VictoryCollectibleCollectionPublic}>()
+        ?? panic("Could not borrow VictoryCollectibleCollectionPublic")
+
     let saleOffer = marketCollectionRef.borrowSaleItem(bundleID: bundleID)
                     ?? panic("Could not borrow sale item from market collection")
 
     return BundleInfo(
             saleCompleted: saleOffer!.saleCompleted,
             bundleID: saleOffer!.bundleID,
-            itemIDs: saleOffer!.itemIDs,
+            itemIDs: itemCollectionRef.getBundleIDs(bundleID: bundleID),
             price: saleOffer!.price,
             saleType: saleOffer!.saleType,
             startTime: saleOffer!.startTime,

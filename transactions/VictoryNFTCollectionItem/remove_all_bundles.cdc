@@ -1,19 +1,19 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
 transaction() {
-    let victoryBundler: Capability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>
+    let victoryBundler: Capability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>
 
     prepare(signer: AuthAccount) {
         // we need a provider capability, but one is not provided by default so we create one.
-        let bundlePath = /private/VictoryNFTCollectionItemBundle
+        let bundlePath = /private/VictoryCollectibleBundle
 
-        if !signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>(bundlePath)!.check() {
-            signer.link<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>(bundlePath, target: VictoryNFTCollectionItem.CollectionStoragePath)
+        if !signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>(bundlePath)!.check() {
+            signer.link<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>(bundlePath, target: VictoryCollectible.CollectionStoragePath)
         }
 
-        self.victoryBundler = signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>(bundlePath)!
-        assert(self.victoryBundler.borrow() != nil, message: "Missing or mis-typed VictoryNFTCollectionItemBundle provider")
+        self.victoryBundler = signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>(bundlePath)!
+        assert(self.victoryBundler.borrow() != nil, message: "Missing or mis-typed VictoryCollectibleBundle provider")
     }
 
     execute {

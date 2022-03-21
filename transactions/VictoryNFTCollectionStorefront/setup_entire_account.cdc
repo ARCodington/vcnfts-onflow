@@ -1,8 +1,8 @@
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import FUSD from "../../contracts/FUSD.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
 
 transaction {
     prepare(signer: AuthAccount) {
@@ -28,29 +28,29 @@ transaction {
         }
 
         // if the account doesn't already have a collection
-        if signer.borrow<&VictoryNFTCollectionItem.Collection>(from: VictoryNFTCollectionItem.CollectionStoragePath) == nil {
+        if signer.borrow<&VictoryCollectible.Collection>(from: VictoryCollectible.CollectionStoragePath) == nil {
 
             // create a new empty collection
-            let collection <- VictoryNFTCollectionItem.createEmptyCollection()
+            let collection <- VictoryCollectible.createEmptyCollection()
             
             // save it to the account
-            signer.save(<-collection, to: VictoryNFTCollectionItem.CollectionStoragePath)
+            signer.save(<-collection, to: VictoryCollectible.CollectionStoragePath)
 
             // create a public capability for the collection
-            signer.link<&VictoryNFTCollectionItem.Collection{NonFungibleToken.CollectionPublic, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItem.CollectionPublicPath, target: VictoryNFTCollectionItem.CollectionStoragePath)
+            signer.link<&VictoryCollectible.Collection{NonFungibleToken.CollectionPublic, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectible.CollectionPublicPath, target: VictoryCollectible.CollectionStoragePath)
         }
 
         // if the account doesn't already have a collection
-        if signer.borrow<&VictoryNFTCollectionStorefront.Collection>(from: VictoryNFTCollectionStorefront.CollectionStoragePath) == nil {
+        if signer.borrow<&VictoryCollectibleSaleOffer.Collection>(from: VictoryCollectibleSaleOffer.CollectionStoragePath) == nil {
 
             // create a new empty collection
-            let collection <- VictoryNFTCollectionStorefront.createEmptyCollection() as! @VictoryNFTCollectionStorefront.Collection
+            let collection <- VictoryCollectibleSaleOffer.createEmptyCollection() as! @VictoryCollectibleSaleOffer.Collection
             
             // save it to the account
-            signer.save(<-collection, to: VictoryNFTCollectionStorefront.CollectionStoragePath)
+            signer.save(<-collection, to: VictoryCollectibleSaleOffer.CollectionStoragePath)
 
             // create a public capability for the collection
-            signer.link<&VictoryNFTCollectionStorefront.Collection{VictoryNFTCollectionStorefront.CollectionPublic}>(VictoryNFTCollectionStorefront.CollectionPublicPath, target: VictoryNFTCollectionStorefront.CollectionStoragePath)
+            signer.link<&VictoryCollectibleSaleOffer.Collection{VictoryCollectibleSaleOffer.CollectionPublic}>(VictoryCollectibleSaleOffer.CollectionPublicPath, target: VictoryCollectibleSaleOffer.CollectionStoragePath)
         }
     }
 }

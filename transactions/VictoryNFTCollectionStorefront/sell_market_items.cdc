@@ -1,42 +1,42 @@
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import FUSD from "../../contracts/FUSD.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
 
 transaction(sellerAddress: Address, royaltyAddress: Address, 
             itemIDs: [UInt64], type: UInt8, price: UFix64, startTime: UInt32, endTime: UInt32, targetPrice: UFix64, 
             royaltyFactor: UFix64) 
 {
-    let victoryBundler: Capability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>
-    let victoryCollection: Capability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>
-    let marketCollection: &VictoryNFTCollectionStorefront.Collection
+    let victoryBundler: Capability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>
+    let victoryCollection: Capability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>
+    let marketCollection: &VictoryCollectibleSaleOffer.Collection
     let sellerPaymentReceiver: Capability<&{FungibleToken.Receiver}>
     let royaltyPaymentReceiver: Capability<&{FungibleToken.Receiver}>
 
     prepare(signer: AuthAccount) {
         // we need a provider capability, but one is not provided by default so we create one.
-        let bundlePath = /private/VictoryNFTCollectionItemBundle
+        let bundlePath = /private/VictoryCollectibleBundle
 
-        if !signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>(bundlePath)!.check() {
-            signer.link<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>(bundlePath, target: VictoryNFTCollectionItem.CollectionStoragePath)
+        if !signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>(bundlePath)!.check() {
+            signer.link<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>(bundlePath, target: VictoryCollectible.CollectionStoragePath)
         }
 
-        self.victoryBundler = signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemBundle}>(bundlePath)!
-        assert(self.victoryBundler.borrow() != nil, message: "Missing or mis-typed VictoryNFTCollectionItemBundle provider")
+        self.victoryBundler = signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleBundle}>(bundlePath)!
+        assert(self.victoryBundler.borrow() != nil, message: "Missing or mis-typed VictoryCollectibleBundle provider")
 
         // we need a provider capability, but one is not provided by default so we create one.
-        let VictoryNFTCollectionItemCollectionProviderPrivatePath = /private/VictoryNFTCollectionItemCollectionProvider
+        let VictoryCollectibleCollectionProviderPrivatePath = /private/VictoryCollectibleCollectionProvider
 
-        if !signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItemCollectionProviderPrivatePath)!.check() {
-            signer.link<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItemCollectionProviderPrivatePath, target: VictoryNFTCollectionItem.CollectionStoragePath)
+        if !signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectibleCollectionProviderPrivatePath)!.check() {
+            signer.link<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectibleCollectionProviderPrivatePath, target: VictoryCollectible.CollectionStoragePath)
         }
 
-        self.victoryCollection = signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItemCollectionProviderPrivatePath)!
-        assert(self.victoryCollection.borrow() != nil, message: "Missing or mis-typed VictoryNFTCollectionItemCollection provider")
+        self.victoryCollection = signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectibleCollectionProviderPrivatePath)!
+        assert(self.victoryCollection.borrow() != nil, message: "Missing or mis-typed VictoryCollectibleCollection provider")
 
-        self.marketCollection = signer.borrow<&VictoryNFTCollectionStorefront.Collection>(from: VictoryNFTCollectionStorefront.CollectionStoragePath)
-            ?? panic("Missing or mis-typed VictoryNFTCollectionStorefront Collection")
+        self.marketCollection = signer.borrow<&VictoryCollectibleSaleOffer.Collection>(from: VictoryCollectibleSaleOffer.CollectionStoragePath)
+            ?? panic("Missing or mis-typed VictoryCollectibleSaleOffer Collection")
 
         let sellerAccount = getAccount(sellerAddress)
         self.sellerPaymentReceiver = sellerAccount.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)!

@@ -1,19 +1,19 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
 // This transction uses the NFTMinter resource to mint a new NFT.
 //
 // It must be run with the account that has the minter resource
 // stored at path /storage/NFTMinter.
 
-transaction(recipient: Address, typeID: UInt64, brandID: UInt64, dropID: UInt64, contentHash: String, startIssueNum: UInt32, maxIssueNum: UInt32, totalIssueNum: UInt32) {
+transaction(recipient: Address, typeID: UInt64, brandID: UInt64, seriesID: UInt64, dropID: UInt64, contentHash: String, startIssueNum: UInt32, maxIssueNum: UInt32, totalIssueNum: UInt32) {
     
     // local variable for storing the minter reference
-    let minter: &VictoryNFTCollectionItem.NFTMinter
+    let minter: &VictoryCollectible.NFTMinter
 
     prepare(signer: AuthAccount) {
         // borrow a reference to the NFTMinter resource in storage
-        self.minter = signer.borrow<&VictoryNFTCollectionItem.NFTMinter>(from: VictoryNFTCollectionItem.MinterStoragePath)
+        self.minter = signer.borrow<&VictoryCollectible.NFTMinter>(from: VictoryCollectible.MinterStoragePath)
             ?? panic("Could not borrow a reference to the NFT minter")
     }
 
@@ -23,7 +23,7 @@ transaction(recipient: Address, typeID: UInt64, brandID: UInt64, dropID: UInt64,
 
         // borrow the recipient's public NFT collection reference
         let receiver = recipientAcct
-            .getCapability(VictoryNFTCollectionItem.CollectionPublicPath)!
+            .getCapability(VictoryCollectible.CollectionPublicPath)!
             .borrow<&{NonFungibleToken.CollectionPublic}>()
             ?? panic("Could not get receiver reference to the NFT Collection")
 
@@ -40,7 +40,8 @@ transaction(recipient: Address, typeID: UInt64, brandID: UInt64, dropID: UInt64,
 
         // mint the NFT and deposit it to the recipient's collection
         self.minter.mintNFT(recipient: receiver, owner: recipient, 
-                            typeID: typeID, brandID: brandID, dropID: dropID,
+                            typeID: typeID, 
+                            brandID: brandID, seriesID: seriesID, dropID: dropID,
                             contentHash:hashInt, 
                             startIssueNum: startIssueNum,
                             maxIssueNum: maxIssueNum, 

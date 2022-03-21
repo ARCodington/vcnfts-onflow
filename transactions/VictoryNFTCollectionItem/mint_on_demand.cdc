@@ -1,5 +1,5 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
 // this script mints a single NFT based on an existing reference NFT (a.k.a. "mint on demand")
 // the metadata is consistent across all NFTs minted in this way, so that they appear to be a cohesive set
@@ -8,11 +8,11 @@ import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.c
 transaction(recipient: Address, referenceItemID: UInt64, issueNum: UInt32) {
     
     // local variable for storing the minter reference
-    let minter: &VictoryNFTCollectionItem.NFTMinter
+    let minter: &VictoryCollectible.NFTMinter
 
     prepare(signer: AuthAccount) {
         // borrow a reference to the NFTMinter resource in storage
-        self.minter = signer.borrow<&VictoryNFTCollectionItem.NFTMinter>(from: VictoryNFTCollectionItem.MinterStoragePath)
+        self.minter = signer.borrow<&VictoryCollectible.NFTMinter>(from: VictoryCollectible.MinterStoragePath)
             ?? panic("Could not borrow a reference to the NFT minter")
     }
 
@@ -22,13 +22,13 @@ transaction(recipient: Address, referenceItemID: UInt64, issueNum: UInt32) {
 
         // borrow the recipient's public NFT collection reference
         let receiver = recipientAcct
-            .getCapability(VictoryNFTCollectionItem.CollectionPublicPath)!
+            .getCapability(VictoryCollectible.CollectionPublicPath)!
             .borrow<&{NonFungibleToken.CollectionPublic}>()
             ?? panic("Could not get receiver reference to the NFT Collection")
 
-        let collection = recipientAcct.getCapability(VictoryNFTCollectionItem.CollectionPublicPath)!
-            .borrow<&{VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>()
-            ?? panic("Could not borrow VictoryNFTCollectionItemCollectionPublic")
+        let collection = recipientAcct.getCapability(VictoryCollectible.CollectionPublicPath)!
+            .borrow<&{VictoryCollectible.VictoryCollectibleCollectionPublic}>()
+            ?? panic("Could not borrow VictoryCollectibleCollectionPublic")
 
         // borrow a reference to a specific NFT in the collection
         let victoryItem = collection.borrowVictoryItem(id: referenceItemID)
@@ -40,6 +40,7 @@ transaction(recipient: Address, referenceItemID: UInt64, issueNum: UInt32) {
                             owner: recipient, 
                             typeID: victoryItem.typeID, 
                             brandID: victoryItem.brandID, 
+                            seriesID: victoryItem.seriesID,
                             dropID: victoryItem.dropID,
                             contentHash: victoryItem.contentHash, 
                             startIssueNum: issueNum,

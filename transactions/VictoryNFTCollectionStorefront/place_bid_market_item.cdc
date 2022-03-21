@@ -1,16 +1,16 @@
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import FUSD from "../../contracts/FUSD.cdc"
 
 transaction(bundleID: UInt64, bidPrice: UFix64, bidder: Address, marketCollectionAddress: Address) {
-    let marketCollection: &VictoryNFTCollectionStorefront.Collection{VictoryNFTCollectionStorefront.CollectionPublic}
+    let marketCollection: &VictoryCollectibleSaleOffer.Collection{VictoryCollectibleSaleOffer.CollectionPublic}
     let bidderReceiver: Capability<&{FungibleToken.Receiver}>
     let bidVault: @FungibleToken.Vault
 
     prepare(signer: AuthAccount) {
         self.marketCollection = getAccount(marketCollectionAddress)
-            .getCapability<&VictoryNFTCollectionStorefront.Collection{VictoryNFTCollectionStorefront.CollectionPublic}>(
-                VictoryNFTCollectionStorefront.CollectionPublicPath
+            .getCapability<&VictoryCollectibleSaleOffer.Collection{VictoryCollectibleSaleOffer.CollectionPublic}>(
+                VictoryCollectibleSaleOffer.CollectionPublicPath
             )!
             .borrow()
             ?? panic("Could not borrow market collection from market address")

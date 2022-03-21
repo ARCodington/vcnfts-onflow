@@ -1,11 +1,11 @@
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
 
 transaction(start: Int, end: Int) {
-    let marketCollection: &VictoryNFTCollectionStorefront.Collection
+    let marketCollection: &VictoryCollectibleSaleOffer.Collection
 
     prepare(signer: AuthAccount) {
-        self.marketCollection = signer.borrow<&VictoryNFTCollectionStorefront.Collection>(from: VictoryNFTCollectionStorefront.CollectionStoragePath)
-            ?? panic("Missing or mis-typed VictoryNFTCollectionStorefront Collection")
+        self.marketCollection = signer.borrow<&VictoryCollectibleSaleOffer.Collection>(from: VictoryCollectibleSaleOffer.CollectionStoragePath)
+            ?? panic("Missing or mis-typed VictoryCollectibleSaleOffer Collection")
     }
 
     execute {

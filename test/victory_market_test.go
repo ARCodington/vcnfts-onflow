@@ -15,6 +15,7 @@ import (
 
 const mtTypeID = 0
 const mtBrandID = 0
+const mtSeriesID = 0
 const mtDropID = 0
 const mtContentHash = "88232f58db5d619497e852dd8ebf3ef6971ec94422d9ae673db53ed2e0f390dc"
 const mtStartIssueNum = 0
@@ -47,7 +48,7 @@ func TestVictoryMarketPrimaryAndSecondaryOffer(t *testing.T) {
 		contracts.VictoryItemsAddress, 
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
-		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
+		mtTypeID, mtBrandID, mtSeriesID, mtDropID, mtContentHash, 
 		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum)
 
 	bundleIDs := []uint64{0, 3}
@@ -348,7 +349,7 @@ func TestVictoryMarketAuction(t *testing.T) {
 		contracts.VictoryItemsAddress, 
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
-		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
+		mtTypeID, mtBrandID, mtSeriesID, mtDropID, mtContentHash, 
 		mtStartIssueNum, mtMaxIssueNum, mtMaxIssueNum)
 
 	bundleIDs := []uint64{0, 3}
@@ -564,7 +565,7 @@ func TestVictoryMarketMintOnDemand(t *testing.T) {
 		contracts.VictoryItemsAddress, 
 		contracts.VictoryItemsSigner,
 		sellerAddress, 
-		mtTypeID, mtBrandID, mtDropID, mtContentHash, 
+		mtTypeID, mtBrandID, mtSeriesID, mtDropID, mtContentHash, 
 		mtStartIssueNum, 1, mtMaxIssueNum)
 
 	// mint one more on demand based on the first item as reference

@@ -13,6 +13,7 @@ import (
 
 const typeID = 0
 const brandID = 0
+const seriesID = 0
 const dropID = 0
 const contentHash = "88232f58db5d619497e852dd8ebf3ef69712394422d9ae673db53ed2e0f390dc"
 const startIssueNum = 0
@@ -47,7 +48,7 @@ func TestCreateVictoryItem(t *testing.T) {
 
 	t.Run("Should be able to mint a victoryItems", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum, singleItemMintCount, singleItemMintCount)
 
 		// assert that the account collection is correct length
@@ -82,7 +83,7 @@ func TestBatchCreateVictoryItem(t *testing.T) {
 
 	t.Run("Should be able to mint batches of victoryItems", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum, singleItemMintCount, maxIssueNum)
 
 		// assert that the account collection is correct length
@@ -104,7 +105,7 @@ func TestBatchCreateVictoryItem(t *testing.T) {
 
 		// mint another batch
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum+1, maxIssueNum-1, maxIssueNum)
 
 		// assert that the account collection is correct length
@@ -136,7 +137,7 @@ func TestBatchCreateVictoryItem(t *testing.T) {
 
 		// mint a third batch
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum, maxIssueNum, maxIssueNum)
 
 		// assert that the account collection is correct length
@@ -201,7 +202,7 @@ func TestTransferNFT(t *testing.T) {
 	// transfer an NFT
 	t.Run("Should be able to withdraw an NFT and deposit to another accounts collection", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum, singleItemMintCount, singleItemMintCount)
 
 		// Cheat: we have minted at least one item, ID zero is valid
@@ -221,7 +222,7 @@ func TestBundleFunctions(t *testing.T) {
 
 	t.Run("Should be able to mint multiple victoryItems", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner,
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum, maxIssueNum, maxIssueNum)
 
 		// assert that the account collection is correct length
@@ -444,7 +445,7 @@ func TestMintOnDemandVictoryItem(t *testing.T) {
 
 	t.Run("Should be able to mint victoryItems on demand", func(t *testing.T) {
 		victory_items.MintItem(t, b, nftAddress, victoryItemsAddr, victoryItemsSigner, 
-			victoryItemsAddr, typeID, brandID, dropID, contentHash, 
+			victoryItemsAddr, typeID, brandID, seriesID, dropID, contentHash, 
 			startIssueNum, singleItemMintCount, maxIssueNum)
 
 		// assert that the account collection is correct length

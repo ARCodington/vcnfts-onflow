@@ -31,8 +31,8 @@ var (
 	FungibleTokenAddressPlaceholder    	= regexp.MustCompile(`"[^"\s].*/FungibleToken.cdc"`)
 	FUSDAddressPlaceholder           	= regexp.MustCompile(`"[^"\s].*/FUSD.cdc"`)
 	NonFungibleTokenAddressPlaceholder	= regexp.MustCompile(`"[^"\s].*/NonFungibleToken.cdc"`)
-	VictoryItemsAddressPlaceholder      = regexp.MustCompile(`"[^"\s].*/VictoryNFTCollectionItem.cdc"`)
-	VictoryMarketAddressPlaceholder    	= regexp.MustCompile(`"[^"\s].*/VictoryNFTCollectionStorefront.cdc"`)
+	VictoryItemsAddressPlaceholder      = regexp.MustCompile(`"[^"\s].*/VictoryCollectible.cdc"`)
+	VictoryMarketAddressPlaceholder    	= regexp.MustCompile(`"[^"\s].*/VictoryCollectibleSaleOffer.cdc"`)
 )
 
 // NewBlockchain returns a new emulated blockchain.

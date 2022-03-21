@@ -1,5 +1,5 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
 // This script returns all the public properties of an NFT in an account's collection.
 
@@ -8,6 +8,7 @@ pub struct ItemInfo {
     pub var id: UInt64
     pub var typeID: UInt64
     pub var brandID: UInt64
+    pub var seriesID: UInt64
     pub var dropID: UInt64
     pub var issueNum: UInt32
     pub var maxIssueNum: UInt32
@@ -18,6 +19,7 @@ pub struct ItemInfo {
         id: UInt64,
         typeID: UInt64,
         brandID: UInt64,
+        seriesID: UInt64,
         dropID: UInt64,
         issueNum: UInt32,
         maxIssueNum: UInt32,
@@ -28,6 +30,7 @@ pub struct ItemInfo {
             self.id = id
             self.typeID = typeID
             self.brandID = brandID
+            self.seriesID = seriesID
             self.dropID = dropID
             self.issueNum = issueNum
             self.maxIssueNum = maxIssueNum
@@ -40,9 +43,9 @@ pub fun main(address: Address, itemID: UInt64): ItemInfo {
     // get the public account object for the token owner
     let owner = getAccount(address)
 
-    let collectionBorrow = owner.getCapability(VictoryNFTCollectionItem.CollectionPublicPath)!
-        .borrow<&{VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>()
-        ?? panic("Could not borrow VictoryNFTCollectionItemCollectionPublic")
+    let collectionBorrow = owner.getCapability(VictoryCollectible.CollectionPublicPath)!
+        .borrow<&{VictoryCollectible.VictoryCollectibleCollectionPublic}>()
+        ?? panic("Could not borrow VictoryCollectibleCollectionPublic")
 
     // borrow a reference to a specific NFT in the collection
     let victoryItem = collectionBorrow.borrowVictoryItem(id: itemID)
@@ -57,6 +60,7 @@ pub fun main(address: Address, itemID: UInt64): ItemInfo {
             id: victoryItem!.id,
             typeID: victoryItem!.typeID,
             brandID: victoryItem!.brandID,
+            seriesID: victoryItem!.seriesID,
             dropID: victoryItem!.dropID,
             issueNum: victoryItem!.issueNum,
             maxIssueNum: victoryItem!.maxIssueNum,

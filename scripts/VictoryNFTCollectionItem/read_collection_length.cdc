@@ -1,12 +1,12 @@
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
 
-// This script returns the size of an account's VictoryNFTCollectionItem collection.
+// This script returns the size of an account's VictoryCollectible collection.
 
 pub fun main(address: Address): Int {
     let account = getAccount(address)
 
-    let collectionRef = account.getCapability(VictoryNFTCollectionItem.CollectionPublicPath)!
+    let collectionRef = account.getCapability(VictoryCollectible.CollectionPublicPath)!
         .borrow<&{NonFungibleToken.CollectionPublic}>()
         ?? panic("Could not borrow capability from public collection")
     

@@ -1,28 +1,28 @@
 import FungibleToken from "../../contracts/FungibleToken.cdc"
 import NonFungibleToken from "../../contracts/NonFungibleToken.cdc"
 import FUSD from "../../contracts/FUSD.cdc"
-import VictoryNFTCollectionItem from "../../contracts/VictoryNFTCollectionItem.cdc"
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectible from "../../contracts/VictoryCollectible.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
 
 transaction(royaltyAddress: Address, bundleID: UInt64, type: UInt8, price: UFix64, startTime: UInt32, endTime: UInt32, targetPrice: UFix64, royaltyFactor: UFix64) {
     let fusdReceiver: Capability<&FUSD.Vault{FungibleToken.Receiver}>
-    let VictoryNFTCollectionItemProvider: Capability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>
-    let marketCollection: &VictoryNFTCollectionStorefront.Collection
+    let VictoryCollectibleProvider: Capability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>
+    let marketCollection: &VictoryCollectibleSaleOffer.Collection
     let royaltyPaymentReceiver: Capability<&FUSD.Vault{FungibleToken.Receiver}>
 
     prepare(signer: AuthAccount) {
         // we need a provider capability, but one is not provided by default so we create one.
-        let VictoryNFTCollectionItemCollectionProviderPrivatePath = /private/VictoryNFTCollectionItemCollectionProvider
+        let VictoryCollectibleCollectionProviderPrivatePath = /private/VictoryCollectibleCollectionProvider
 
-        if !signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItemCollectionProviderPrivatePath)!.check() {
-            signer.link<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItemCollectionProviderPrivatePath, target: VictoryNFTCollectionItem.CollectionStoragePath)
+        if !signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectibleCollectionProviderPrivatePath)!.check() {
+            signer.link<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectibleCollectionProviderPrivatePath, target: VictoryCollectible.CollectionStoragePath)
         }
 
-        self.VictoryNFTCollectionItemProvider = signer.getCapability<&VictoryNFTCollectionItem.Collection{NonFungibleToken.Provider, VictoryNFTCollectionItem.VictoryNFTCollectionItemCollectionPublic}>(VictoryNFTCollectionItemCollectionProviderPrivatePath)!
-        assert(self.VictoryNFTCollectionItemProvider.borrow() != nil, message: "Missing or mis-typed VictoryNFTCollectionItemCollection provider")
+        self.VictoryCollectibleProvider = signer.getCapability<&VictoryCollectible.Collection{NonFungibleToken.Provider, VictoryCollectible.VictoryCollectibleCollectionPublic}>(VictoryCollectibleCollectionProviderPrivatePath)!
+        assert(self.VictoryCollectibleProvider.borrow() != nil, message: "Missing or mis-typed VictoryCollectibleCollection provider")
 
-        self.marketCollection = signer.borrow<&VictoryNFTCollectionStorefront.Collection>(from: VictoryNFTCollectionStorefront.CollectionStoragePath)
-            ?? panic("Missing or mis-typed VictoryNFTCollectionStorefront Collection")
+        self.marketCollection = signer.borrow<&VictoryCollectibleSaleOffer.Collection>(from: VictoryCollectibleSaleOffer.CollectionStoragePath)
+            ?? panic("Missing or mis-typed VictoryCollectibleSaleOffer Collection")
 
         self.fusdReceiver = signer.getCapability<&FUSD.Vault{FungibleToken.Receiver}>(/public/fusdReceiver)!
         assert(self.fusdReceiver.borrow() != nil, message: "Missing or mis-typed FUSD receiver")
@@ -34,7 +34,7 @@ transaction(royaltyAddress: Address, bundleID: UInt64, type: UInt8, price: UFix6
 
     execute {
         let offer <- self.marketCollection.createSaleOffer (
-            sellerItemProvider: self.VictoryNFTCollectionItemProvider,
+            sellerItemProvider: self.VictoryCollectibleProvider,
             bundleID: bundleID,
             sellerPaymentReceiver: self.fusdReceiver,
             price: price,

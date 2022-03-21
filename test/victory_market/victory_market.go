@@ -23,7 +23,7 @@ const (
 	victoryMarketTransactionsRootPath 	= rootPath + "/transactions/VictoryNFTCollectionStorefront"
 	victoryMarketScriptsRootPath      	= rootPath + "/scripts/VictoryNFTCollectionStorefront"
 
-	victoryMarketContractPath           = rootPath + "/contracts/VictoryNFTCollectionStorefront.cdc"
+	victoryMarketContractPath           = rootPath + "/contracts/VictoryCollectibleSaleOffer.cdc"
 	victoryMarketSetupAccountPath       = victoryMarketTransactionsRootPath + "/setup_account.cdc"
 	victoryMarketSellPath       		= victoryMarketTransactionsRootPath + "/sell_market_bundle.cdc"
 	victoryMarketRemovePath 			= victoryMarketTransactionsRootPath + "/remove_market_item.cdc"
@@ -54,7 +54,7 @@ func DeployContracts(t *testing.T, b *emulator.Blockchain) test.Contracts {
 		[]*flow.AccountKey{victoryMarketAccountKey},
 		[]sdktemplates.Contract{
 			{
-				Name:   "VictoryNFTCollectionStorefront",
+				Name:   "VictoryCollectibleSaleOffer",
 				Source: string(victoryMarketCode),
 			},
 		},
@@ -166,7 +166,7 @@ func CreateOffer(
 	// confirm an event was raised
 	if (!shouldFail) {
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionStorefront.CollectionInsertedSaleOffer",
+			"A.%s.VictoryCollectibleSaleOffer.CollectionInsertedSaleOffer",
 			contracts.VictoryMarketAddress,
 		)
 
@@ -204,7 +204,7 @@ func RemoveOffer(
 
 	// confirm an event was raised
 	eventType := fmt.Sprintf(
-		"A.%s.VictoryNFTCollectionStorefront.CollectionRemovedSaleOffer",
+		"A.%s.VictoryCollectibleSaleOffer.CollectionRemovedSaleOffer",
 		contracts.VictoryMarketAddress,
 	)
 
@@ -250,7 +250,7 @@ func PlaceOfferBid(
 	// confirm an event was raised
 	if (!shouldFail) {
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionStorefront.CollectionPriceRaised",
+			"A.%s.VictoryCollectibleSaleOffer.CollectionPriceRaised",
 			contracts.VictoryMarketAddress,
 		)
 
@@ -292,7 +292,7 @@ func BuyOffer(
 	// confirm an event was raised
 	if (!shouldFail) {
 		eventType := fmt.Sprintf(
-			"A.%s.VictoryNFTCollectionItem.Withdraw",
+			"A.%s.VictoryCollectible.Withdraw",
 			contracts.VictoryItemsAddress,
 		)
 

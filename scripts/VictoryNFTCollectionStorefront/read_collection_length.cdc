@@ -1,12 +1,12 @@
-import VictoryNFTCollectionStorefront from "../../contracts/VictoryNFTCollectionStorefront.cdc"
+import VictoryCollectibleSaleOffer from "../../contracts/VictoryCollectibleSaleOffer.cdc"
 
 // This script returns the size of an account's SaleOffer collection.
 
 pub fun main(account: Address, marketCollectionAddress: Address): Int {
     let acct = getAccount(account)
     let marketCollectionRef = getAccount(marketCollectionAddress)
-        .getCapability<&VictoryNFTCollectionStorefront.Collection{VictoryNFTCollectionStorefront.CollectionPublic}>(
-             VictoryNFTCollectionStorefront.CollectionPublicPath
+        .getCapability<&VictoryCollectibleSaleOffer.Collection{VictoryCollectibleSaleOffer.CollectionPublic}>(
+             VictoryCollectibleSaleOffer.CollectionPublicPath
         )
         .borrow()
         ?? panic("Could not borrow market collection from market address")

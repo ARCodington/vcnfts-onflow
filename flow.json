@@ -6,8 +6,8 @@
 		}
 	},
 	"contracts": {
-		"VictoryNFTCollectionItem": "./contracts/VictoryNFTCollectionItem.cdc",
-		"VictoryNFTCollectionStorefront": "./contracts/VictoryNFTCollectionStorefront.cdc",
+		"VictoryCollectible": "./contracts/VictoryCollectible.cdc",
+		"VictoryCollectibleSaleOffer": "./contracts/VictoryCollectibleSaleOffer.cdc",
 		"FungibleToken": {
 			"source": "./contracts/FungibleToken.cdc",
 			"aliases": {
@@ -48,15 +48,15 @@
 	"deployments": {
 		"testnet": {
 			"testnet-account": [
-				"VictoryNFTCollectionItem",
-				"VictoryNFTCollectionStorefront",
+				"VictoryCollectible",
+				"VictoryCollectibleSaleOffer",
 				"FUSD"
 			]
 		},
 		"emulator": {
 			"emulator-account": [
-				"VictoryNFTCollectionItem",
-				"VictoryNFTCollectionStorefront",
+				"VictoryCollectible",
+				"VictoryCollectibleSaleOffer",
 				"NonFungibleToken",
 				"FUSD"
 			]
